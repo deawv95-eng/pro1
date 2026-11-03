@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมทายคำศัพท์ภาษาอังกฤษเก่งจัง (English Vocab Fun)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        :root {
+            --bg-color: #E8F5E9;       /* เขียวอ่อนสบายตา */
+            --card-bg: #FFFFFF;
+            --primary: #4CAF50;        /* เขียวสดใส */
+            --primary-hover: #45a049;
+            --accent: #FF9800;         /* ส้มอ่อนเพิ่มความสดใส */
+            --text-main: #2C3E50;
+            --text-muted: #607D8B;
+            --correct-color: #2ECC71;
+            --wrong-color: #E74C3C;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --radius: 20px;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Container หลักทรงการ์ด */
+        .game-container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 550px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 30px 25px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Header & Stats */
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .game-title {
+            font-size: 1.8rem;
+            color: #2E7D32;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #F1F8E9;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .score-box {
+            color: #388E3C;
+        }
+
+        .timer-box {
+            color: #D32F2F;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .timer-progress {
+            height: 6px;
+            background-color: #E0E0E0;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .timer-bar {
+            height: 100%;
+            width: 100%;
+            background-color: #E53935;
+            transition: width 1s linear;
+        }
+
+        /* ส่วนแสดงรูปภาพ */
+        .image-container {
+            width: 220px;
+            height: 180px;
+            margin: 20px auto;
+            border-radius: 15px;
+            background-color: #F9F9F9;
+            border: 3px dashed #C8E6C9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-container img {
+            max-width: 85%;
+            max-height: 85%;
+            object-fit: contain;
+            display: none;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .image-placeholder {
+            font-size: 4rem;
+            color: #A5D6A7;
+        }
+
+        /* ส่วนแสดงคำศัพท์ */
+        .word-display {
+            font-family: 'Fredoka One', cursive, 'Sarabun';
+            font-size: 2.8rem;
+            letter-spacing: 12px;
+            color: #1B5E20;
+            margin: 20px 0 10px 0;
+            text-transform: uppercase;
+        }
+
+        .thai-hint {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+        }
+
+        /* ปุ่มตัวเลือก */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            background-color: #FFFFFF;
+            border: 2px solid #C8E6C9;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 1.8rem;
+            font-family: 'Fredoka One', cursive;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #E8F5E9;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        /* สถานะตอบถูก / ผิด */
+        .option-btn.correct {
+            background-color: var(--correct-color) !important;
+            color: white !important;
+            border-color: var(--correct-color) !important;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong-color) !important;
+            color: white !important;
+            border-color: var(--wrong-color) !important;
+        }
+
+        /* Screens: Start & Game Over */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .btn-main {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3);
+            transition: all 0.2s ease;
+            margin-top: 15px;
+        }
+
+        .btn-main:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .game-over-title {
+            font-size: 2rem;
+            color: #D32F2F;
+            margin-bottom: 10px;
+        }
+
+        .final-score {
+            font-size: 1.5rem;
+            margin: 20px 0;
+            color: var(--text-main);
+        }
+
+        .final-score span {
+            font-size: 2.2rem;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* Animations */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Responsive UI */
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 20px 15px;
+            }
+            .word-display {
+                font-size: 2.2rem;
+                letter-spacing: 8px;
+            }
+            .option-btn {
+                padding: 12px;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- หน้าแรก / เริ่มเกม -->
+        <div id="start-screen" class="screen active">
+            <h1 class="game-title">🎮 ทายคำศัพท์ภาษาอังกฤษ</h1>
+            <p style="font-size: 1.1rem; color: #555; margin-bottom: 25px; line-height: 1.6;">
+                เหมาะสำหรับน้องๆ ชั้น ป.2<br>
+                เลือกตัวอักษรที่หายไปให้ถูกต้อง<br>
+                มีเวลาข้อละ <strong>20 วินาที</strong> นะครับ!
+            </p>
+            <div style="font-size: 5rem; margin-bottom: 20px;">✏️</div>
+            <button class="btn-main" onclick="startGame()">เริ่มเล่นเกมเลย!</button>
+        </div>
+
+        <!-- หน้าเล่นเกม -->
+        <div id="game-screen" class="screen">
+            <div class="header">
+                <div class="stats-bar">
+                    <div class="score-box">คะแนน: <span id="score">0</span></div>
+                    <div class="timer-box">⏱️ <span id="timer">20</span>s</div>
+                </div>
+                <div class="timer-progress">
+                    <div id="timer-bar" class="timer-bar"></div>
+                </div>
+            </div>
+
+            <div class="image-container">
+                <div id="image-placeholder" class="image-placeholder">❓</div>
+                <img id="word-image" src="" alt="คำศัพท์">
+            </div>
+
+            <div id="word-display" class="word-display">_ A T</div>
+            <div id="thai-hint" class="thai-hint">(คำแปลภาษาไทย)</div>
+
+            <div id="options-grid" class="options-grid">
+                <!-- ตัวเลือกจะถูกสร้างด้วย JS -->
+            </div>
+        </div>
+
+        <!-- หน้าจบเกม -->
+        <div id="game-over-screen" class="screen">
+            <h1 class="game-over-title">⏰ หมดเวลาแล้วจ้า!</h1>
+            <div style="font-size: 4rem; margin: 10px 0;">🌟</div>
+            <div class="final-score">
+                คะแนนที่คุณครูได้บันทึกไว้<br>
+                <span id="final-score">0</span> คะแนน
+            </div>
+            <button class="btn-main" onclick="startGame()">เล่นอีกครั้ง 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        // คลังคำศัพท์สำหรับ ป.2 (เน้นคำสั้น จำง่าย ภาพชัดเจน)
+        const vocabularyList = [
+            { word: "CAT", missingIndex: 0, hint: "แมว", img: "https://cdn-icons-png.flaticon.com/512/616/616430.png" },
+            { word: "DOG", missingIndex: 1, hint: "สุนัข", img: "https://cdn-icons-png.flaticon.com/512/616/616408.png" },
+            { word: "SUN", missingIndex: 2, hint: "ดวงอาทิตย์", img: "https://cdn-icons-png.flaticon.com/512/869/869869.png" },
+            { word: "PIG", missingIndex: 0, hint: "หมู", img: "https://cdn-icons-png.flaticon.com/512/616/616422.png" },
+            { word: "PEN", missingIndex: 1, hint: "ปากกา", img: "https://cdn-icons-png.flaticon.com/512/1250/1250615.png" },
+            { word: "BOOK", missingIndex: 2, hint: "หนังสือ", img: "https://cdn-icons-png.flaticon.com/512/3389/3389081.png" },
+            { word: "FISH", missingIndex: 3, hint: "ปลา", img: "https://cdn-icons-png.flaticon.com/512/616/616429.png" },
+            { word: "DUCK", missingIndex: 0, hint: "เป็ด", img: "https://cdn-icons-png.flaticon.com/512/616/616412.png" },
+            { word: "MILK", missingIndex: 1, hint: "นม", img: "https://cdn-icons-png.flaticon.com/512/3050/3050148.png" },
+            { word: "TREE", missingIndex: 2, hint: "ต้นไม้", img: "https://cdn-icons-png.flaticon.com/512/489/489969.png" },
+            { word: "BIRD", missingIndex: 0, hint: "นก", img: "https://cdn-icons-png.flaticon.com/512/616/616410.png" },
+            { word: "CAR", missingIndex: 2, hint: "รถยนต์", img: "https://cdn-icons-png.flaticon.com/512/741/741407.png" }
+        ];
+
+        let currentQuestion = null;
+        let score = 0;
+        let timeLeft = 20;
+        let timerInterval = null;
+        let isAnswered = false;
+
+        // เปลี่ยนหน้า (SPA Navigation)
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // เริ่มเกมใหม่
+        function startGame() {
+            score = 0;
+            document.getElementById('score').textContent = score;
+            showScreen('game-screen');
+            nextQuestion();
+        }
+
+        // โหลดคำถามถัดไป
+        function nextQuestion() {
+            isAnswered = false;
+            
+            // ซ่อนภาพไว้ก่อน ตอบถูกถึงจะแสดง
+            const imgEl = document.getElementById('word-image');
+            const placeholderEl = document.getElementById('image-placeholder');
+            imgEl.style.display = 'none';
+            imgEl.src = '';
+            placeholderEl.style.display = 'block';
+
+            // สุ่มคำศัพท์
+            const randomIndex = Math.floor(Math.random() * vocabularyList.length);
+            currentQuestion = vocabularyList[randomIndex];
+
+            // สร้างข้อความที่มีตัวอักษรหายไป
+            const wordArr = currentQuestion.word.split('');
+            const correctAnswer = wordArr[currentQuestion.missingIndex];
+            wordArr[currentQuestion.missingIndex] = '_';
+            
+            document.getElementById('word-display').textContent = wordArr.join(' ');
+            document.getElementById('thai-hint').textContent = `( ความหมาย: ${currentQuestion.hint} )`;
+
+            // สร้างตัวเลือก 4 ช้อยส์
+            generateOptions(correctAnswer);
+
+            // รีเซ็ตนาฬิกา 20 วินาที
+            startTimer();
+        }
+
+        // สุ่มสร้างตัวเลือก (Choice Generation)
+        function generateOptions(correctAnswer) {
+            const grid = document.getElementById('options-grid');
+            grid.innerHTML = '';
+
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const choices = [correctAnswer];
+
+            // สุ่มตัวเลือกที่ผิดมาให้ครบ 4 ช้อยส์
+            while (choices.length < 4) {
+                const randomLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+                if (!choices.includes(randomLetter)) {
+                    choices.push(randomLetter);
+                }
+            }
+
+            // สลับลำดับตัวเลือก (Shuffle)
+            choices.sort(() => Math.random() - 0.5);
+
+            // แสดงปุ่มตัวเลือกบน Screen
+            choices.forEach(letter => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = letter;
+                btn.onclick = () => checkAnswer(letter, btn, correctAnswer);
+                grid.appendChild(btn);
+            });
+        }
+
+        // ตรวจคำตอบ
+        function checkAnswer(selectedLetter, buttonEl, correctAnswer) {
+            if (isAnswered) return;
+            isAnswered = true;
+            clearInterval(timerInterval);
+
+            const allButtons = document.querySelectorAll('.option-btn');
+            allButtons.forEach(btn => btn.disabled = true);
+
+            if (selectedLetter === correctAnswer) {
+                // ตอบถูก
+                buttonEl.classList.add('correct');
+                score += 1;
+                document.getElementById('score').textContent = score;
+
+                // เฉลยตัวอักษรบนคำศัพท์
+                document.getElementById('word-display').textContent = currentQuestion.word.split('').join(' ');
+
+                // แสดงรูปภาพเมื่อตอบถูก
+                const imgEl = document.getElementById('word-image');
+                const placeholderEl = document.getElementById('image-placeholder');
+                imgEl.src = currentQuestion.img;
+                imgEl.style.display = 'block';
+                placeholderEl.style.display = 'none';
+
+                // ไปข้อต่อไปหลังจาก 1.5 วินาที
+                setTimeout(nextQuestion, 1500);
+            } else {
+                // ตอบผิด
+                buttonEl.classList.add('wrong');
+                
+                // แสดงปุ่มที่ถูก
+                allButtons.forEach(btn => {
+                    if (btn.textContent === correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+
+                // ไปข้อต่อไปหลังจาก 1.5 วินาที
+                setTimeout(nextQuestion, 1500);
+            }
+        }
+
+        // นับถอยหลัง 20 วินาที
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 20;
+            updateTimerUI();
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerUI();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    gameOver();
+                }
+            }, 1000);
+        }
+
+        // อัปเดต UI ของแถบและตัวเลขเวลา
+        function updateTimerUI() {
+            document.getElementById('timer').textContent = timeLeft;
+            const percentage = (timeLeft / 20) * 100;
+            document.getElementById('timer-bar').style.width = percentage + '%';
+        }
+
+        // หมดเวลา / จบเกม
+        function gameOver() {
+            document.getElementById('final-score').textContent = score;
+            showScreen('game-over-screen');
+        }
+    </script>
+</body>
+</html>
